@@ -4,4 +4,4 @@ ta
 requests
 openai
 gunicorn
-tvdatafeed
+git+https://github.com/rongardF/tvdatafeed.git
