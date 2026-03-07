@@ -4,3 +4,4 @@ ta
 requests
 openai
 gunicorn
+tvdatafeed
