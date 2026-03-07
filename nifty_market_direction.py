@@ -3,6 +3,7 @@
 from tvDatafeed import TvDatafeed, Interval
 import pandas as pd
 import ta
+import time
 
 def fetch_nifty_data():
 
@@ -83,4 +84,6 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    while True:
+        main()
+        time.sleep(900)   # run every 15 minutes
