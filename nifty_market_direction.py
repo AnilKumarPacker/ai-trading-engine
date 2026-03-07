@@ -27,12 +27,39 @@ def init_daily_log():
 
 # Append new row to log
 def update_log(price, trend, dx, suggested_strategy):
+
     now = datetime.datetime.now()
     date = now.strftime("%Y-%m-%d")
-    time = now.strftime("%H:%M")
-    with open(log_file, "a", newline="") as f:
-        writer = csv.writer(f)
-        writer.writerow([date, time, price, trend, dx, suggested_strategy])
+    time = now.strftime("%H:00")   # hour bucket
+
+    new_row = {
+        "Date": date,
+        "Time": time,
+        "Price": price,
+        "Trend": trend,
+        "DX": dx,
+        "Suggested Strategy": suggested_strategy
+    }
+
+    # Read existing log
+    if os.path.exists(log_file):
+        df = pd.read_csv(log_file)
+    else:
+        df = pd.DataFrame(columns=["Date","Time","Price","Trend","DX","Suggested Strategy"])
+
+    # Check if this hour already exists
+    existing = (df["Date"] == date) & (df["Time"] == time)
+
+    if existing.any():
+        # Update row
+        df.loc[existing, :] = new_row
+    else:
+        # Insert new row
+        df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
+
+    # Save back
+    df.to_csv(log_file, index=False)
+
 
 # Supertrend calculation using iloc
 def add_supertrend(df, period=10, multiplier=3):
