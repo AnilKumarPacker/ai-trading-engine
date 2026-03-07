@@ -15,15 +15,12 @@ log_file = "daily_log.csv"
 def init_daily_log():
     today = datetime.datetime.now().strftime("%Y-%m-%d")
     if os.path.exists(log_file):
-        # Check if last entry is from today
         df_check = pd.read_csv(log_file)
         if df_check.empty or df_check.iloc[-1]["Date"] != today:
-            # New day → overwrite headers
             with open(log_file, "w", newline="") as f:
                 writer = csv.writer(f)
                 writer.writerow(["Date", "Time", "Price", "Trend", "DX", "Suggested Strategy"])
     else:
-        # File doesn't exist → create headers
         with open(log_file, "w", newline="") as f:
             writer = csv.writer(f)
             writer.writerow(["Date", "Time", "Price", "Trend", "DX", "Suggested Strategy"])
@@ -37,7 +34,7 @@ def update_log(price, trend, dx, suggested_strategy):
         writer = csv.writer(f)
         writer.writerow([date, time, price, trend, dx, suggested_strategy])
 
-# Supertrend function
+# Supertrend calculation using iloc
 def add_supertrend(df, period=10, multiplier=3):
     df['ATR'] = ta.volatility.AverageTrueRange(df['high'], df['low'], df['close'], window=period).average_true_range()
     df['Basic_Upper'] = (df['high'] + df['low']) / 2 + multiplier * df['ATR']
@@ -48,16 +45,24 @@ def add_supertrend(df, period=10, multiplier=3):
 
     for i in range(len(df)):
         if i == 0:
-            df.at[i, 'Final_Upper'] = df.at[i, 'Basic_Upper']
-            df.at[i, 'Final_Lower'] = df.at[i, 'Basic_Lower']
+            df.iloc[i, df.columns.get_loc('Final_Upper')] = df.iloc[i]['Basic_Upper']
+            df.iloc[i, df.columns.get_loc('Final_Lower')] = df.iloc[i]['Basic_Lower']
         else:
-            df.at[i, 'Final_Upper'] = min(df.at[i, 'Basic_Upper'], df.at[i-1, 'Final_Upper']) if df.at[i-1, 'close'] <= df.at[i-1, 'Final_Upper'] else df.at[i, 'Basic_Upper']
-            df.at[i, 'Final_Lower'] = max(df.at[i, 'Basic_Lower'], df.at[i-1, 'Final_Lower']) if df.at[i-1, 'close'] >= df.at[i-1, 'Final_Lower'] else df.at[i, 'Basic_Lower']
+            prev_close = df.iloc[i-1]['close']
+            prev_final_upper = df.iloc[i-1]['Final_Upper']
+            prev_final_lower = df.iloc[i-1]['Final_Lower']
 
-        if df.at[i, 'close'] > df.at[i, 'Final_Lower']:
-            df.at[i, 'Supertrend'] = True
-        elif df.at[i, 'close'] < df.at[i, 'Final_Upper']:
-            df.at[i, 'Supertrend'] = False
+            basic_upper = df.iloc[i]['Basic_Upper']
+            basic_lower = df.iloc[i]['Basic_Lower']
+
+            df.iloc[i, df.columns.get_loc('Final_Upper')] = min(basic_upper, prev_final_upper) if prev_close <= prev_final_upper else basic_upper
+            df.iloc[i, df.columns.get_loc('Final_Lower')] = max(basic_lower, prev_final_lower) if prev_close >= prev_final_lower else basic_lower
+
+        # Supertrend
+        if df.iloc[i]['close'] > df.iloc[i]['Final_Lower']:
+            df.iloc[i, df.columns.get_loc('Supertrend')] = True
+        elif df.iloc[i]['close'] < df.iloc[i]['Final_Upper']:
+            df.iloc[i, df.columns.get_loc('Supertrend')] = False
 
     return df
 
