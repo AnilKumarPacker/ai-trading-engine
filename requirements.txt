@@ -1,0 +1,6 @@
+flask
+pandas
+ta
+requests
+openai
+gunicorn

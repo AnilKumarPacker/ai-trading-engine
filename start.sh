@@ -1,0 +1,1 @@
+python nifty_market_direction.py
