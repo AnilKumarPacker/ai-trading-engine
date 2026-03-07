@@ -1,13 +1,13 @@
-# nifty_market_direction.py
-
+from flask import Flask, render_template
 from tvDatafeed import TvDatafeed, Interval
 import pandas as pd
 import ta
-import time
 
-def fetch_nifty_data():
+app = Flask(__name__)
 
-    tv = TvDatafeed()
+tv = TvDatafeed()
+
+def get_market_direction():
 
     data = tv.get_hist(
         symbol='NIFTY',
@@ -16,74 +16,47 @@ def fetch_nifty_data():
         n_bars=200
     )
 
-    return data
-
-
-def calculate_indicators(df):
+    df = pd.DataFrame(data)
 
     df["EMA20"] = ta.trend.ema_indicator(df["close"], window=20)
     df["EMA50"] = ta.trend.ema_indicator(df["close"], window=50)
     df["RSI"] = ta.momentum.rsi(df["close"], window=14)
 
-    return df
-
-
-def determine_market_direction(df):
-
     last = df.iloc[-1]
 
-    price = last["close"]
-    ema20 = last["EMA20"]
-    ema50 = last["EMA50"]
-    rsi = last["RSI"]
+    price = round(last["close"],2)
+    ema20 = round(last["EMA20"],2)
+    ema50 = round(last["EMA50"],2)
+    rsi = round(last["RSI"],2)
 
     if price > ema20 and ema20 > ema50 and rsi > 55:
-        direction = "BULLISH"
-
+        trend = "BULLISH"
+        color = "green"
     elif price < ema20 and ema20 < ema50 and rsi < 45:
-        direction = "BEARISH"
-
+        trend = "BEARISH"
+        color = "red"
     else:
-        direction = "RANGE"
+        trend = "RANGE"
+        color = "orange"
 
-    return {
-        "price": price,
-        "ema20": ema20,
-        "ema50": ema50,
-        "rsi": rsi,
-        "direction": direction
-    }
+    return price, ema20, ema50, rsi, trend, color
 
 
-def print_summary(result):
+@app.route("/")
+def dashboard():
 
-    print("\n-------- NIFTY MARKET ANALYSIS --------")
-    print(f"Current Price : {result['price']:.2f}")
-    print(f"EMA 20        : {result['ema20']:.2f}")
-    print(f"EMA 50        : {result['ema50']:.2f}")
-    print(f"RSI           : {result['rsi']:.2f}")
-    print(f"Market Trend  : {result['direction']}")
-    print("---------------------------------------\n")
+    price, ema20, ema50, rsi, trend, color = get_market_direction()
 
-
-def main():
-
-    print("Fetching NIFTY data...")
-
-    df = fetch_nifty_data()
-
-    if df is None or df.empty:
-        print("Failed to fetch data")
-        return
-
-    df = calculate_indicators(df)
-
-    result = determine_market_direction(df)
-
-    print_summary(result)
+    return render_template(
+        "dashboard.html",
+        price=price,
+        ema20=ema20,
+        ema50=ema50,
+        rsi=rsi,
+        trend=trend,
+        color=color
+    )
 
 
 if __name__ == "__main__":
-    while True:
-        main()
-        time.sleep(900)   # run every 15 minutes
+    app.run(host="0.0.0.0", port=10000)
