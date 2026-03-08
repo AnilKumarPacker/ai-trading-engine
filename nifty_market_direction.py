@@ -67,7 +67,6 @@ def add_supertrend(df, period=10, multiplier=3):
     df['Final_Lower'] = 0.0
     df['Supertrend'] = True
 
-    ```
     for i in range(len(df)):
         if i == 0:
             df.iloc[i, df.columns.get_loc('Final_Upper')] = df.iloc[i]['Basic_Upper']
@@ -89,13 +88,12 @@ def add_supertrend(df, period=10, multiplier=3):
             df.iloc[i, df.columns.get_loc('Supertrend')] = False
 
     return df
-```
+
 
 # Compute market direction
 
 def get_market_direction():
 
-```
     data = tv.get_hist(symbol='NIFTY', exchange='NSE', interval=Interval.in_1_hour, n_bars=200)
     df = pd.DataFrame(data)
 
@@ -168,12 +166,11 @@ def get_market_direction():
         color,
         suggested_strategy
     )
-```
+
 
 @app.route("/")
 def dashboard():
 
-```
     init_daily_log()
 
     (
@@ -221,7 +218,6 @@ def dashboard():
     suggested_strategy=suggested_strategy,
     log_records=log_records
 )
-```
 
-if **name** == "**main**":
-app.run(host="0.0.0.0", port=10000)
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=10000)
