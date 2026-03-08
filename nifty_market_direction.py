@@ -67,32 +67,68 @@ def update_log(price, trend, dx, suggested_strategy):
 # Supertrend calculation
 
 def add_supertrend(df, period=10, multiplier=3):
-    df['ATR'] = ta.volatility.AverageTrueRange(df['high'], df['low'], df['close'], window=period).average_true_range()
-    df['Basic_Upper'] = (df['high'] + df['low']) / 2 + multiplier * df['ATR']
-    df['Basic_Lower'] = (df['high'] + df['low']) / 2 - multiplier * df['ATR']
+
+    df['ATR'] = ta.volatility.AverageTrueRange(
+        df['high'], df['low'], df['close'], window=period
+    ).average_true_range()
+
+    hl2 = (df['high'] + df['low']) / 2
+
+    df['Basic_Upper'] = hl2 + multiplier * df['ATR']
+    df['Basic_Lower'] = hl2 - multiplier * df['ATR']
+
     df['Final_Upper'] = 0.0
     df['Final_Lower'] = 0.0
-    df['Supertrend'] = True
+    df['Trend'] = True
+    df['Supertrend'] = 0.0
 
     for i in range(len(df)):
+
         if i == 0:
             df.iloc[i, df.columns.get_loc('Final_Upper')] = df.iloc[i]['Basic_Upper']
             df.iloc[i, df.columns.get_loc('Final_Lower')] = df.iloc[i]['Basic_Lower']
+            df.iloc[i, df.columns.get_loc('Supertrend')] = df.iloc[i]['Basic_Lower']
+            continue
+
+        prev_close = df.iloc[i-1]['close']
+        prev_upper = df.iloc[i-1]['Final_Upper']
+        prev_lower = df.iloc[i-1]['Final_Lower']
+
+        basic_upper = df.iloc[i]['Basic_Upper']
+        basic_lower = df.iloc[i]['Basic_Lower']
+
+        # Final upper band
+        if basic_upper < prev_upper or prev_close > prev_upper:
+            final_upper = basic_upper
         else:
-            prev_close = df.iloc[i-1]['close']
-            prev_final_upper = df.iloc[i-1]['Final_Upper']
-            prev_final_lower = df.iloc[i-1]['Final_Lower']
+            final_upper = prev_upper
 
-            basic_upper = df.iloc[i]['Basic_Upper']
-            basic_lower = df.iloc[i]['Basic_Lower']
+        # Final lower band
+        if basic_lower > prev_lower or prev_close < prev_lower:
+            final_lower = basic_lower
+        else:
+            final_lower = prev_lower
 
-            df.iloc[i, df.columns.get_loc('Final_Upper')] = min(basic_upper, prev_final_upper) if prev_close <= prev_final_upper else basic_upper
-            df.iloc[i, df.columns.get_loc('Final_Lower')] = max(basic_lower, prev_final_lower) if prev_close >= prev_final_lower else basic_lower
+        df.iloc[i, df.columns.get_loc('Final_Upper')] = final_upper
+        df.iloc[i, df.columns.get_loc('Final_Lower')] = final_lower
 
-        if df.iloc[i]['close'] > df.iloc[i]['Final_Lower']:
-            df.iloc[i, df.columns.get_loc('Supertrend')] = True
-        elif df.iloc[i]['close'] < df.iloc[i]['Final_Upper']:
-            df.iloc[i, df.columns.get_loc('Supertrend')] = False
+        # Trend logic
+        prev_trend = df.iloc[i-1]['Trend']
+
+        if df.iloc[i]['close'] > final_upper:
+            trend = True
+        elif df.iloc[i]['close'] < final_lower:
+            trend = False
+        else:
+            trend = prev_trend
+
+        df.iloc[i, df.columns.get_loc('Trend')] = trend
+
+        # Actual SuperTrend value
+        if trend:
+            df.iloc[i, df.columns.get_loc('Supertrend')] = final_lower
+        else:
+            df.iloc[i, df.columns.get_loc('Supertrend')] = final_upper
 
     return df
 
@@ -122,7 +158,7 @@ def get_market_direction():
         # Supertrend
         df = add_supertrend(df)
 
-        last = df.iloc[-1]
+        last = df.iloc[-2]
     except Exception as exc:
         app.logger.warning(f"Falling back to placeholder market data: {exc}")
 
@@ -159,10 +195,8 @@ def get_market_direction():
     di_minus = round(last["-DI"],2)
     dx = round(last["DX"],2)
 
-    supertrend_bull = last["Supertrend"]
-
-    # Supertrend value for comparison
-    supertrend_value = round(last["Final_Lower"],2) if supertrend_bull else round(last["Final_Upper"],2)
+    supertrend_bull = last["Trend"]
+    supertrend_value = round(last["Supertrend"], 2)
 
     # Directional bias
     if di_plus > di_minus and dx > 20 and supertrend_bull:
