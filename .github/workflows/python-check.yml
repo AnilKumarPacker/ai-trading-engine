@@ -1,0 +1,31 @@
+name: Python Code Check
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.11"
+
+    - name: Install dependencies
+      run: |
+        pip install flask pandas requests
+
+    - name: Check Python syntax
+      run: |
+        python -m py_compile nifty_market_direction.py
+
+    - name: Run script test
+      run: |
+        python nifty_market_direction.py
