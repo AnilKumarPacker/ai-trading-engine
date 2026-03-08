@@ -19,7 +19,7 @@ def init_daily_log():
     df_check = pd.DataFrame()   # initialize first
 
     try:
-        df_check = pd.read_csv(LOG_FILE)
+        df_check = pd.read_csv(log_file)
     except:
         df_check = pd.DataFrame(columns=["Date", "Price", "EMA", "DI+", "DI-"])
 
@@ -32,7 +32,7 @@ def init_daily_log():
             "DI-": ""
         }
         df_check = pd.concat([df_check, pd.DataFrame([new_row])], ignore_index=True)
-        df_check.to_csv(LOG_FILE, index=False)
+        df_check.to_csv(log_file, index=False)
 
 # Append new row to log
 
