@@ -6,7 +6,7 @@ import datetime
 import os
 import csv
 
-app = Flask(**name**)
+app = Flask(__name__)
 tv = TvDatafeed()
 
 log_file = "daily_log.csv"
