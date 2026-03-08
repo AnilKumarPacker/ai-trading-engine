@@ -4,35 +4,36 @@ import pandas as pd
 import ta
 import datetime
 import os
-import csv
 
 app = Flask(__name__)
 tv = TvDatafeed()
 
 log_file = "daily_log.csv"
+LOG_COLUMNS = ["Date", "Time", "Price", "Trend", "DX", "Suggested Strategy"]
+
+
+def load_log_dataframe():
+    if not os.path.exists(log_file):
+        return pd.DataFrame(columns=LOG_COLUMNS)
+
+    try:
+        df = pd.read_csv(log_file)
+    except Exception:
+        return pd.DataFrame(columns=LOG_COLUMNS)
+
+    df.columns = [str(column).strip() for column in df.columns]
+
+    for column in LOG_COLUMNS:
+        if column not in df.columns:
+            df[column] = pd.NA
+
+    return df[LOG_COLUMNS].copy()
 
 # Initialize or reset daily log
 
 def init_daily_log():
-    today = datetime.datetime.now().strftime("%Y-%m-%d")
-
-    df_check = pd.DataFrame()   # initialize first
-
-    try:
-        df_check = pd.read_csv(log_file)
-    except:
-        df_check = pd.DataFrame(columns=["Date", "Price", "EMA", "DI+", "DI-"])
-
-    if df_check.empty or df_check.iloc[-1]["Date"] != today:
-        new_row = {
-            "Date": today,
-            "Price": "",
-            "EMA": "",
-            "DI+": "",
-            "DI-": ""
-        }
-        df_check = pd.concat([df_check, pd.DataFrame([new_row])], ignore_index=True)
-        df_check.to_csv(log_file, index=False)
+    df_check = load_log_dataframe()
+    df_check.to_csv(log_file, index=False)
 
 # Append new row to log
 
@@ -50,17 +51,15 @@ def update_log(price, trend, dx, suggested_strategy):
         "Suggested Strategy": suggested_strategy
     }
 
-    if os.path.exists(log_file):
-        df = pd.read_csv(log_file)
-    else:
-        df = pd.DataFrame(columns=["Date","Time","Price","Trend","DX","Suggested Strategy"])
+    df = load_log_dataframe()
 
-    existing = (df["Date"] == date) & (df["Time"] == time)
+    existing = (df["Date"].astype(str) == date) & (df["Time"].astype(str) == time)
 
     if existing.any():
-        df.loc[existing, :] = new_row
+        for column, value in new_row.items():
+            df.loc[existing, column] = value
     else:
-        df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
+        df.loc[len(df)] = new_row
 
     df.to_csv(log_file, index=False)
 
@@ -102,24 +101,49 @@ def add_supertrend(df, period=10, multiplier=3):
 
 def get_market_direction():
 
-    data = tv.get_hist(symbol='NIFTY', exchange='NSE', interval=Interval.in_1_hour, n_bars=200)
-    df = pd.DataFrame(data)
+    try:
+        data = tv.get_hist(symbol='NIFTY', exchange='NSE', interval=Interval.in_1_hour, n_bars=200)
+        df = pd.DataFrame(data)
 
-    # Indicators
-    df["EMA9"] = ta.trend.ema_indicator(df["close"], window=9)
-    df["EMA21"] = ta.trend.ema_indicator(df["close"], window=21)
-    df["RSI"] = ta.momentum.rsi(df["close"], window=14)
+        if df.empty:
+            raise ValueError("No market data received from TradingView")
 
-    # DMI
-    dmi = ta.trend.ADXIndicator(df["high"], df["low"], df["close"], window=14)
-    df["+DI"] = dmi.adx_pos()
-    df["-DI"] = dmi.adx_neg()
-    df["DX"] = (abs(df["+DI"] - df["-DI"]) / (df["+DI"] + df["-DI"])) * 100
+        # Indicators
+        df["EMA9"] = ta.trend.ema_indicator(df["close"], window=9)
+        df["EMA21"] = ta.trend.ema_indicator(df["close"], window=21)
+        df["RSI"] = ta.momentum.rsi(df["close"], window=14)
 
-    # Supertrend
-    df = add_supertrend(df)
+        # DMI
+        dmi = ta.trend.ADXIndicator(df["high"], df["low"], df["close"], window=14)
+        df["+DI"] = dmi.adx_pos()
+        df["-DI"] = dmi.adx_neg()
+        df["DX"] = (abs(df["+DI"] - df["-DI"]) / (df["+DI"] + df["-DI"])) * 100
 
-    last = df.iloc[-1]
+        # Supertrend
+        df = add_supertrend(df)
+
+        last = df.iloc[-1]
+    except Exception as exc:
+        app.logger.warning(f"Falling back to placeholder market data: {exc}")
+
+        return (
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            False,
+            0.0,
+            "RANGE",
+            "orange",
+            "Data unavailable: check TradingView/network connectivity"
+        )
 
     price = round(last["close"],2)
     open_price = round(last["open"],2)
