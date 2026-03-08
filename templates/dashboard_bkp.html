@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>NIFTY AI Dashboard</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        h1, h2 { color: #333; }
+        .value { margin: 5px 0; font-size: 16px; }
+        table { border-collapse: collapse; margin-top: 20px; width:100%; }
+        th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
+        th { background-color: #f2f2f2; }
+    </style>
+</head>
+<body>
+
+<h1>NIFTY AI Dashboard</h1>
+
+<div class="value">Price: {{price}}</div>
+<div class="value">EMA9: {{ema9}}</div>
+<div class="value">EMA21: {{ema21}}</div>
+<div class="value">RSI: {{rsi}}</div>
+<div class="value">+DI: {{di_plus}}</div>
+<div class="value">-DI: {{di_minus}}</div>
+<div class="value">DX: {{dx}}</div>
+<div class="value">Supertrend: {% if supertrend_bull %}BULLISH{% else %}BEARISH{% endif %}</div>
+<div class="value" style="color: {{color}};">TREND: {{trend}}</div>
+<div class="value" style="font-weight:bold;">Suggested Strategy: {{suggested_strategy}}</div>
+
+<h2>Hourly Log</h2>
+<table>
+    <tr>
+        <th>Date</th>
+        <th>Time</th>
+        <th>Price</th>
+        <th>Trend</th>
+        <th>DX</th>
+        <th>Suggested Strategy</th>
+    </tr>
+    {% for row in log_records %}
+    <tr>
+        <td>{{row['Date']}}</td>
+        <td>{{row['Time']}}</td>
+        <td>{{row['Price']}}</td>
+        <td style="color: {% if row['Trend']=='BULLISH' %}green{% elif row['Trend']=='BEARISH' %}red{% else %}orange{% endif %};">
+            {{row['Trend']}}
+        </td>
+        <td>{{row['DX']}}</td>
+        <td>{{row['Suggested Strategy']}}</td>
+    </tr>
+    {% endfor %}
+</table>
+
+</body>
+</html>
