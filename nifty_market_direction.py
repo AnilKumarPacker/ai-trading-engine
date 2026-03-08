@@ -15,16 +15,24 @@ log_file = "daily_log.csv"
 
 def init_daily_log():
     today = datetime.datetime.now().strftime("%Y-%m-%d")
-    if os.path.exists(log_file):
-        df_check = pd.read_csv(log_file)
+
+    df_check = pd.DataFrame()   # initialize first
+
+    try:
+        df_check = pd.read_csv(LOG_FILE)
+    except:
+        df_check = pd.DataFrame(columns=["Date", "Price", "EMA", "DI+", "DI-"])
+
     if df_check.empty or df_check.iloc[-1]["Date"] != today:
-        with open(log_file, "w", newline="") as f:
-            writer = csv.writer(f)
-            writer.writerow(["Date", "Time", "Price", "Trend", "DX", "Suggested Strategy"])
-    else:
-        with open(log_file, "w", newline="") as f:
-            writer = csv.writer(f)
-            writer.writerow(["Date", "Time", "Price", "Trend", "DX", "Suggested Strategy"])
+        new_row = {
+            "Date": today,
+            "Price": "",
+            "EMA": "",
+            "DI+": "",
+            "DI-": ""
+        }
+        df_check = pd.concat([df_check, pd.DataFrame([new_row])], ignore_index=True)
+        df_check.to_csv(LOG_FILE, index=False)
 
 # Append new row to log
 
