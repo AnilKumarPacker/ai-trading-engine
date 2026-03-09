@@ -4,7 +4,6 @@ import pandas as pd
 import ta
 import datetime
 import os
-import pytz
 
 app = Flask(__name__)
 tv = TvDatafeed()
@@ -39,7 +38,7 @@ def init_daily_log():
 # Append new row to log
 
 def update_log(price, trend, dx, suggested_strategy):
-    now = datetime.datetime.now(pytz.timezone("Asia/Kolkata"))
+    now = datetime.datetime.utcnow() + datetime.timedelta(hours=5, minutes=30)
     date = now.strftime("%Y-%m-%d")
     time = now.strftime("%H:00")
 
