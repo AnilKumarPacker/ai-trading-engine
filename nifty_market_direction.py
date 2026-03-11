@@ -6,6 +6,7 @@ import datetime
 import os
 import threading
 import time
+from option_engine import build_strategy, format_strategy
 
 app = Flask(__name__)
 tv = TvDatafeed()
@@ -124,6 +125,34 @@ def build_hourly_log(df):
         })
 
     return rows
+    
+def get_dummy_option_chain(price):
+
+    base = int(round(price / 50) * 50)
+
+    chain = []
+
+    for i in range(-6, 7):
+
+        strike = base + (i * 50)
+
+        # fake delta logic just for testing
+        delta_call = max(0.05, min(0.5, 0.5 - abs(i)*0.05))
+        delta_put = -delta_call
+
+        chain.append({
+            "strike": strike,
+            "type": "CE",
+            "delta": round(delta_call, 2)
+        })
+
+        chain.append({
+            "strike": strike,
+            "type": "PE",
+            "delta": round(delta_put, 2)
+        })
+
+    return chain
 
 
 def add_supertrend(df, period=10, multiplier=3):
@@ -277,6 +306,20 @@ def get_market_direction():
         trend = "RANGE"
         color = "orange"
         strategy = "Iron Condor / Short Strangle"
+        
+    # -------------------------------------
+    # OPTION ENGINE (runs after trend set)
+    # -------------------------------------
+
+    option_chain = get_dummy_option_chain(price)
+
+    spread = build_strategy(option_chain, trend)
+    
+    # SAFE FORMAT
+    if spread is None:
+        spread_text = "No valid spread found"
+    else:
+        spread_text = format_strategy(spread)
 
     return (
         price,
@@ -294,7 +337,7 @@ def get_market_direction():
         supertrend_value,
         trend,
         color,
-        strategy
+        spread_text
     )
 
 
@@ -368,7 +411,7 @@ def dashboard():
         supertrend_value=supertrend_value,
         trend=trend,
         color=color,
-        suggested_strategy=strategy,
+        suggested_strategy=spread_text,
         log_records=log_records
     )
 
