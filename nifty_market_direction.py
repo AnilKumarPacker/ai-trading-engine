@@ -7,6 +7,7 @@ import os
 import threading
 import time
 from option_engine import build_strategy, format_strategy
+from kotak_option_chain import get_kotak_option_chain
 
 app = Flask(__name__)
 tv = TvDatafeed()
@@ -311,7 +312,7 @@ def get_market_direction():
     # OPTION ENGINE (runs after trend set)
     # -------------------------------------
 
-    option_chain = get_dummy_option_chain(price)
+    option_chain = get_kotak_option_chain()
 
     spread = build_strategy(option_chain, trend)
     
@@ -411,7 +412,7 @@ def dashboard():
         supertrend_value=supertrend_value,
         trend=trend,
         color=color,
-        suggested_strategy=spread_text,
+        suggested_strategy=strategy,
         log_records=log_records
     )
 
