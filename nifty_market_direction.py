@@ -6,6 +6,7 @@ import datetime
 import os
 import threading
 import time
+import requests
 from option_engine import build_strategy, format_strategy
 from kotak_option_chain import get_kotak_option_chain
 
@@ -32,6 +33,20 @@ def is_market_hours(dt):
     market_open = dt.replace(hour=9, minute=15, second=0)
     market_close = dt.replace(hour=15, minute=30, second=0)
     return market_open <= dt <= market_close
+
+def get_option_chain():
+    url = "https://www.nseindia.com/api/option-chain-indices?symbol=NIFTY"
+
+    headers = {
+        "User-Agent": "Mozilla/5.0",
+        "Accept-Language": "en-US,en;q=0.9"
+    }
+
+    session = requests.Session()
+    session.get("https://www.nseindia.com", headers=headers)
+
+    data = session.get(url, headers=headers).json()
+    return data
 
 
 def load_log_dataframe():
@@ -312,7 +327,7 @@ def get_market_direction():
     # OPTION ENGINE (runs after trend set)
     # -------------------------------------
 
-    option_chain = get_kotak_option_chain()
+    option_chain = get_option_chain()
 
     spread = build_strategy(option_chain, trend)
     
