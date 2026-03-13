@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: trade-dashboard
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: python nifty_market_direction.py
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
