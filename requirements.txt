@@ -1,11 +1,11 @@
 setuptools>=68
 wheel
+
 flask
 pandas
 ta
+tvdatafeed
 requests
-openai
-gunicorn
 websocket-client
-git+https://github.com/rongardF/tvdatafeed.git
+
 git+https://github.com/Kotak-Neo/kotak-neo-api.git
