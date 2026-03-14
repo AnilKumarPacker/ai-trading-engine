@@ -27,13 +27,19 @@ ACCESS_TOKEN = "YOUR_ACCESS_TOKEN"
 
 def get_kotak_client():
 
-    client = NeoAPI(
-        consumer_key=CLIENT_ID
-    )
+    url = "https://www.nseindia.com/api/option-chain-indices?symbol=NIFTY"
 
-    client.set_access_token(ACCESS_TOKEN)
+    headers = {
+        "User-Agent": "Mozilla/5.0",
+        "Accept-Language": "en-US,en;q=0.9"
+    }
 
-    return client
+    session = requests.Session()
+    session.get("https://www.nseindia.com", headers=headers)
+
+    data = session.get(url, headers=headers).json()
+
+    return data
 
 
 # ---------------------------------
