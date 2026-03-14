@@ -327,7 +327,7 @@ def get_market_direction():
     # OPTION ENGINE (runs after trend set)
     # -------------------------------------
 
-    option_chain = get_kotak_option_chain()
+    option_chain = get_option_chain()
 
     spread = build_strategy(option_chain, trend)
     
