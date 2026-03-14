@@ -6,3 +6,4 @@ ta
 git+https://github.com/rongardF/tvdatafeed.git
 requests
 websocket-client
+git+https://github.com/Kotak-Neo/kotak-neo-api.git
