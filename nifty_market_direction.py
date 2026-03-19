@@ -38,14 +38,14 @@ def get_option_chain():
     url = "https://www.nseindia.com/api/option-chain-indices?symbol=NIFTY"
 
     headers = {
-        "User-Agent": "Mozilla/5.0",
-        "Accept-Language": "en-US,en;q=0.9"
+        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.159 Safari/537.36',
+        'accept-language': 'en-US,en;q=0.9', 'accept-encoding': 'gzip, deflate, br'
     }
 
-    session = requests.Session()
-    session.get("https://www.nseindia.com", headers=headers)
-
-    data = session.get(url, headers=headers).json()
+    r = requests.get(url, headers=headers).json()
+    data = r
+    print("Option chain keys:", data)
+    #print("Underlying:", data["records"]["underlyingValue"])
     return data
 
 
@@ -327,15 +327,15 @@ def get_market_direction():
     # OPTION ENGINE (runs after trend set)
     # -------------------------------------
 
-    option_chain = get_option_chain()
+    #option_chain = get_option_chain()
 
-    spread = build_strategy(option_chain, trend)
+    #spread = build_strategy(option_chain, trend)
     
     # SAFE FORMAT
-    if spread is None:
-        spread_text = "No valid spread found"
-    else:
-        spread_text = format_strategy(spread)
+    #if spread is None:
+    #    spread_text = "No valid spread found"
+    #else:
+    #    spread_text = format_strategy(spread)
 
     return (
         price,
@@ -353,7 +353,7 @@ def get_market_direction():
         supertrend_value,
         trend,
         color,
-        spread_text
+        strategy
     )
 
 
