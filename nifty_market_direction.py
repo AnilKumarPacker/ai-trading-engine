@@ -8,7 +8,7 @@ import threading
 import time
 import requests
 from option_engine import build_strategy, format_strategy
-from kotak_option_chain import get_kotak_option_chain
+#from kotak_option_chain import get_kotak_option_chain
 
 app = Flask(__name__)
 tv = TvDatafeed()
