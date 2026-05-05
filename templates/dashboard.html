@@ -1,167 +1,216 @@
 <!DOCTYPE html>
-
 <html>
 <head>
-    <title>NIFTY AI Dashboard</title>
+    <title>{{symbol}} AI Trading Dashboard</title>
 
-```
-<style>
-    body { font-family: Arial, sans-serif; padding: 20px; }
-    h1, h2 { color: #333; }
-    .value { margin: 5px 0; font-size: 16px; }
+    <style>
+        body {
+            font-family: Arial;
+            background: #0f172a;
+            color: #e2e8f0;
+            margin: 0;
+            padding: 20px;
+        }
 
-    table { border-collapse: collapse; margin-top: 20px; width:100%; }
-    th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
-    th { background-color: #f2f2f2; }
+        h1 {
+            margin-bottom: 10px;
+        }
 
-    /* OHLC underline */
-    .underline {
-        text-decoration: underline;
-        font-weight: bold;
-    }
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
 
-    /* Indicator signals */
-    .green-underline{
-        text-decoration: underline;
-        text-decoration-color: green;
-        text-decoration-thickness: 3px;
-    }
+        select {
+            padding: 5px;
+            border-radius: 6px;
+        }
 
-    .red-underline{
-        text-decoration: underline;
-        text-decoration-color: red;
-        text-decoration-thickness: 3px;
-    }
-</style>
-```
+        .container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
 
+        .card {
+            background: #1e293b;
+            padding: 20px;
+            border-radius: 14px;
+            box-shadow: 0px 4px 12px rgba(0,0,0,0.4);
+        }
+
+        .title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #334155;
+            padding-bottom: 5px;
+        }
+
+        .row {
+            display: flex;
+            justify-content: space-between;
+            margin: 6px 0;
+        }
+
+        .label {
+            color: #94a3b8;
+        }
+
+        .value {
+            font-weight: bold;
+        }
+
+        .green { color: #22c55e; }
+        .red { color: #ef4444; }
+        .orange { color: #f59e0b; }
+
+        .big {
+            font-size: 20px;
+            margin-top: 10px;
+        }
+
+        .execution-box {
+            background: black;
+            color: #00ff9f;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 13px;
+        }
+
+        hr {
+            border: 0;
+            border-top: 1px solid #334155;
+            margin: 10px 0;
+        }
+    </style>
 </head>
 
 <body>
 
-<h1>NIFTY AI Dashboard</h1>
+<div class="top-bar">
+    <h1>{{symbol}} AI Trading Dashboard</h1>
 
-<div class="value">Price: {{price}}</div>
-<div class="value">EMA9: {{ema9}}</div>
-<div class="value">EMA21: {{ema21}}</div>
-<div class="value">RSI: {{rsi}}</div>
-<div class="value">+DI: {{di_plus}}</div>
-<div class="value">-DI: {{di_minus}}</div>
-<div class="value">DX: {{dx}}</div>
-
-<div class="value">
-Supertrend: {% if supertrend_bull %}BULLISH{% else %}BEARISH{% endif %}
+    <form method="get">
+        <select name="symbol" onchange="this.form.submit()">
+            <option value="NIFTY" {% if symbol=="NIFTY" %}selected{% endif %}>NIFTY</option>
+            <option value="BANKNIFTY" {% if symbol=="BANKNIFTY" %}selected{% endif %}>BANKNIFTY</option>
+        </select>
+    </form>
 </div>
 
-<div class="value" style="color: {{color}};">
-TREND: {{trend}}
+<div class="container">
+
+    <!-- ========================= -->
+    <!-- TREND -->
+    <!-- ========================= -->
+    <div class="card">
+        <div class="title">📈 Multi-Timeframe Trend</div>
+
+        <div class="row">
+            <span class="label">Price</span>
+            <span class="value">{{price}}</span>
+        </div>
+
+        <hr>
+
+        <div class="row">
+            <span class="label">Daily Trend</span>
+            <span class="value {% if daily_trend=='BULLISH' %}green{% else %}red{% endif %}">
+                {{daily_trend}}
+            </span>
+        </div>
+
+        <div class="row">
+            <span class="label">Hourly Trend</span>
+            <span class="value {% if hourly_trend=='BULLISH' %}green{% else %}red{% endif %}">
+                {{hourly_trend}}
+            </span>
+        </div>
+
+        <div class="row">
+            <span class="label">Alignment</span>
+            <span class="value {% if alignment=='ALIGNED' %}green{% else %}orange{% endif %}">
+                {{alignment}}
+            </span>
+        </div>
+
+        <hr>
+
+        <div class="row">
+            <span class="label">EMA 9</span>
+            <span class="value">{{ema9}}</span>
+        </div>
+
+        <div class="row">
+            <span class="label">EMA 21</span>
+            <span class="value">{{ema21}}</span>
+        </div>
+
+        <div class="row">
+            <span class="label">RSI</span>
+            <span class="value">{{rsi}}</span>
+        </div>
+
+        <div class="row">
+            <span class="label">DX</span>
+            <span class="value">{{dx}}</span>
+        </div>
+
+        <div class="big">
+            Final Trend:
+            <span class="{{color}}">{{trend}}</span>
+        </div>
+    </div>
+
+    <!-- ========================= -->
+    <!-- DECISION -->
+    <!-- ========================= -->
+    <div class="card">
+        <div class="title">🧠 Decision Engine</div>
+
+        <div class="row">
+            <span class="label">Market Type</span>
+            <span class="{{color}}">{{trend}}</span>
+        </div>
+
+        <div class="row">
+            <span class="label">Strength</span>
+            <span>
+                {% if dx > 30 %}
+                <span class="green">STRONG</span>
+                {% elif dx > 20 %}
+                <span class="orange">MODERATE</span>
+                {% else %}
+                <span class="red">WEAK</span>
+                {% endif %}
+            </span>
+        </div>
+
+        <div class="row">
+            <span class="label">Momentum</span>
+            <span>
+                {% if rsi > 60 %}
+                <span class="green">BULLISH</span>
+                {% elif rsi < 40 %}
+                <span class="red">BEARISH</span>
+                {% else %}
+                <span class="orange">SIDEWAYS</span>
+                {% endif %}
+            </span>
+        </div>
+
+        <hr>
+
+        <div class="big">Strategy</div>
+        <div class="big {{color}}">
+            {{suggested_strategy}}
+        </div>
+    </div>
 </div>
-
-<div class="value" style="font-weight:bold;">
-Suggested Strategy: {{suggested_strategy}}
-</div>
-
-<h2>Daily OHLC</h2>
-
-<table>
-
-<tr>
-<th>Open</th>
-<th>High</th>
-<th>Low</th>
-<th>Close</th>
-</tr>
-
-<tr>
-
-<td class="{% if close < open %}underline{% endif %}">
-{{open}}
-</td>
-
-<td class="{% if close < high %}underline{% endif %}">
-{{high}}
-</td>
-
-<td class="{% if close > low %}underline{% endif %}">
-{{low}}
-</td>
-
-<td>
-{{close}}
-</td>
-
-</tr>
-
-</table>
-
-<h2>Indicator Signals</h2>
-
-<table>
-
-<tr>
-<th>Indicator</th>
-<th>Value</th>
-</tr>
-
-<tr>
-<td>EMA 9</td>
-<td class="{% if close > ema9 %}green-underline{% else %}red-underline{% endif %}">
-{{ema9}}
-</td>
-</tr>
-
-<tr>
-<td>EMA 21</td>
-<td class="{% if close > ema21 %}green-underline{% else %}red-underline{% endif %}">
-{{ema21}}
-</td>
-</tr>
-
-<tr>
-<td>Supertrend</td>
-<td class="{% if close > supertrend_value %}green-underline{% else %}red-underline{% endif %}">
-{{supertrend_value}}
-</td>
-</tr>
-
-</table>
-
-<h2>Hourly Log</h2>
-
-<table>
-
-<tr>
-<th>Date</th>
-<th>Time</th>
-<th>Price</th>
-<th>Trend</th>
-<th>DX</th>
-<th>Suggested Strategy</th>
-</tr>
-
-{% for row in log_records %}
-
-<tr>
-
-<td>{{row['Date']}}</td>
-
-<td>{{row['Time']}}</td>
-
-<td>{{row['Price']}}</td>
-
-<td style="color: {% if row['Trend']=='BULLISH' %}green{% elif row['Trend']=='BEARISH' %}red{% else %}orange{% endif %};">
-{{row['Trend']}}
-</td>
-
-<td>{{row['DX']}}</td>
-
-<td>{{row['Suggested Strategy']}}</td>
-
-</tr>
-
-{% endfor %}
-
-</table>
 
 </body>
 </html>

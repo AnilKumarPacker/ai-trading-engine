@@ -1,19 +1,67 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>NIFTY AI Dashboard</title>
+    <title>{{symbol}} AI Dashboard</title>
+
     <style>
-        body { font-family: Arial, sans-serif; padding: 20px; }
+        body { font-family: Arial; padding: 20px; }
+
         h1, h2 { color: #333; }
+
         .value { margin: 5px 0; font-size: 16px; }
-        table { border-collapse: collapse; margin-top: 20px; width:100%; }
-        th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
+
+        table {
+            border-collapse: collapse;
+            margin-top: 20px;
+            width:100%;
+        }
+
+        th, td {
+            border: 1px solid #ccc;
+            padding: 8px;
+            text-align: center;
+        }
+
         th { background-color: #f2f2f2; }
+
+        .green { color: green; font-weight: bold; }
+        .red { color: red; font-weight: bold; }
+        .orange { color: orange; font-weight: bold; }
+
+        .green-underline {
+            text-decoration: underline;
+            text-decoration-color: green;
+            text-decoration-thickness: 3px;
+        }
+
+        .red-underline {
+            text-decoration: underline;
+            text-decoration-color: red;
+            text-decoration-thickness: 3px;
+        }
+
+        .top-bar {
+            margin-bottom: 20px;
+        }
     </style>
 </head>
+
 <body>
 
-<h1>NIFTY AI Dashboard</h1>
+<div class="top-bar">
+    <h1>{{symbol}} AI Dashboard</h1>
+
+    <!-- SYMBOL SWITCH -->
+    <form method="get">
+        <label>Select Symbol:</label>
+        <select name="symbol" onchange="this.form.submit()">
+            <option value="NIFTY" {% if symbol=="NIFTY" %}selected{% endif %}>NIFTY</option>
+            <option value="BANKNIFTY" {% if symbol=="BANKNIFTY" %}selected{% endif %}>BANKNIFTY</option>
+        </select>
+    </form>
+</div>
+
+<h2>Market Overview</h2>
 
 <div class="value">Price: {{price}}</div>
 <div class="value">EMA9: {{ema9}}</div>
@@ -22,32 +70,89 @@
 <div class="value">+DI: {{di_plus}}</div>
 <div class="value">-DI: {{di_minus}}</div>
 <div class="value">DX: {{dx}}</div>
-<div class="value">Supertrend: {% if supertrend_bull %}BULLISH{% else %}BEARISH{% endif %}</div>
-<div class="value" style="color: {{color}};">TREND: {{trend}}</div>
-<div class="value" style="font-weight:bold;">Suggested Strategy: {{suggested_strategy}}</div>
 
-<h2>Hourly Log</h2>
+<div class="value">
+Supertrend: 
+{% if supertrend_bull %}
+<span class="green">BULLISH</span>
+{% else %}
+<span class="red">BEARISH</span>
+{% endif %}
+</div>
+
+<div class="value">
+TREND:
+<span class="{{color}}">{{trend}}</span>
+</div>
+
+<div class="value" style="font-weight:bold;">
+Suggested Strategy: {{suggested_strategy}}
+</div>
+
+<!-- INDICATOR TABLE -->
+<h2>Indicator Signals</h2>
+
 <table>
-    <tr>
-        <th>Date</th>
-        <th>Time</th>
-        <th>Price</th>
-        <th>Trend</th>
-        <th>DX</th>
-        <th>Suggested Strategy</th>
-    </tr>
-    {% for row in log_records %}
-    <tr>
-        <td>{{row['Date']}}</td>
-        <td>{{row['Time']}}</td>
-        <td>{{row['Price']}}</td>
-        <td style="color: {% if row['Trend']=='BULLISH' %}green{% elif row['Trend']=='BEARISH' %}red{% else %}orange{% endif %};">
-            {{row['Trend']}}
-        </td>
-        <td>{{row['DX']}}</td>
-        <td>{{row['Suggested Strategy']}}</td>
-    </tr>
-    {% endfor %}
+
+<tr>
+<th>Indicator</th>
+<th>Value</th>
+</tr>
+
+<tr>
+<td>EMA 9</td>
+<td class="{% if price > ema9 %}green-underline{% else %}red-underline{% endif %}">
+{{ema9}}
+</td>
+</tr>
+
+<tr>
+<td>EMA 21</td>
+<td class="{% if price > ema21 %}green-underline{% else %}red-underline{% endif %}">
+{{ema21}}
+</td>
+</tr>
+
+</table>
+
+<!-- HOURLY LOG -->
+<h2>Hourly Log</h2>
+
+<table>
+
+<tr>
+<th>Date</th>
+<th>Time</th>
+<th>Price</th>
+<th>Trend</th>
+<th>DX</th>
+<th>Strategy</th>
+</tr>
+
+{% for row in log_records %}
+
+<tr>
+
+<td>{{row['Date']}}</td>
+<td>{{row['Time']}}</td>
+<td>{{row['Price']}}</td>
+
+<td class="
+{% if row['Trend']=='BULLISH' %}green
+{% elif row['Trend']=='BEARISH' %}red
+{% else %}orange
+{% endif %}
+">
+{{row['Trend']}}
+</td>
+
+<td>{{row['DX']}}</td>
+<td>{{row['Suggested Strategy']}}</td>
+
+</tr>
+
+{% endfor %}
+
 </table>
 
 </body>
