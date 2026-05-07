@@ -2,215 +2,357 @@
 <html>
 <head>
     <title>{{symbol}} AI Trading Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
 
     <style>
-        body {
-            font-family: Arial;
-            background: #0f172a;
-            color: #e2e8f0;
-            margin: 0;
-            padding: 20px;
+        :root {
+            --bg: #101418;
+            --panel: #171d23;
+            --panel-soft: #1d252d;
+            --line: #2b3641;
+            --text: #e8edf2;
+            --muted: #93a0ad;
+            --green: #28c76f;
+            --red: #ff5c5c;
+            --orange: #ffb020;
+            --blue: #5aa9ff;
         }
 
-        h1 {
-            margin-bottom: 10px;
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Inter, Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 22px;
+        }
+
+        .shell {
+            max-width: 1180px;
+            margin: 0 auto;
         }
 
         .top-bar {
             display: flex;
             justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
+            align-items: flex-start;
+            gap: 18px;
+            margin-bottom: 18px;
         }
 
-        select {
-            padding: 5px;
-            border-radius: 6px;
+        h1 {
+            font-size: 26px;
+            line-height: 1.1;
+            margin: 0 0 8px;
         }
 
-        .container {
+        .subtitle {
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+
+        .tab {
+            color: var(--muted);
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 0;
+            padding: 10px 14px;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            background: var(--panel);
+        }
+
+        .tab.active {
+            color: var(--text);
+            border-color: var(--blue);
+            background: #152536;
+        }
+
+        .summary {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 20px;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .metric,
+        .card {
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: 8px;
+        }
+
+        .metric {
+            padding: 16px;
+            min-height: 96px;
+        }
+
+        .metric-label,
+        .label {
+            color: var(--muted);
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0;
+        }
+
+        .metric-value {
+            display: block;
+            margin-top: 10px;
+            font-size: 24px;
+            font-weight: 800;
+            line-height: 1.1;
+            overflow-wrap: anywhere;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1.15fr 0.85fr;
+            gap: 16px;
         }
 
         .card {
-            background: #1e293b;
-            padding: 20px;
-            border-radius: 14px;
-            box-shadow: 0px 4px 12px rgba(0,0,0,0.4);
+            padding: 18px;
         }
 
-        .title {
-            font-size: 18px;
-            font-weight: bold;
-            margin-bottom: 15px;
-            border-bottom: 1px solid #334155;
-            padding-bottom: 5px;
+        .card-title {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding-bottom: 12px;
+            margin-bottom: 14px;
+            border-bottom: 1px solid var(--line);
+            font-size: 15px;
+            font-weight: 800;
+        }
+
+        .trend-grid {
+            display: grid;
+            gap: 10px;
+        }
+
+        .trend-grid {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+
+        .tile {
+            background: var(--panel-soft);
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            padding: 14px;
+            min-height: 78px;
+        }
+
+        .tile-value {
+            display: block;
+            margin-top: 9px;
+            font-size: 17px;
+            font-weight: 800;
+        }
+
+        .rows {
+            display: grid;
+            gap: 10px;
         }
 
         .row {
             display: flex;
             justify-content: space-between;
-            margin: 6px 0;
+            align-items: center;
+            gap: 16px;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--line);
         }
 
-        .label {
-            color: #94a3b8;
+        .row:last-child {
+            border-bottom: 0;
         }
 
         .value {
-            font-weight: bold;
+            font-weight: 800;
+            text-align: right;
         }
 
-        .green { color: #22c55e; }
-        .red { color: #ef4444; }
-        .orange { color: #f59e0b; }
-
-        .big {
-            font-size: 20px;
-            margin-top: 10px;
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 28px;
+            padding: 6px 10px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 800;
+            border: 1px solid currentColor;
+            white-space: nowrap;
         }
 
-        .execution-box {
-            background: black;
-            color: #00ff9f;
-            padding: 15px;
+        .green { color: var(--green); }
+        .red { color: var(--red); }
+        .orange { color: var(--orange); }
+        .blue { color: var(--blue); }
+
+        .decision {
+            background: var(--panel-soft);
+            border: 1px solid var(--line);
             border-radius: 8px;
-            font-family: monospace;
-            font-size: 13px;
+            padding: 14px;
+            margin-top: 14px;
         }
 
-        hr {
-            border: 0;
-            border-top: 1px solid #334155;
-            margin: 10px 0;
+        .decision-text {
+            margin: 12px 0 0;
+            color: #cbd4dd;
+            line-height: 1.45;
+            font-size: 14px;
+        }
+
+        @media (max-width: 840px) {
+            body {
+                padding: 14px;
+            }
+
+            .top-bar,
+            .grid {
+                grid-template-columns: 1fr;
+                display: grid;
+            }
+
+            .tabs {
+                justify-content: flex-start;
+            }
+
+            .summary,
+            .trend-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        @media (max-width: 520px) {
+            h1 {
+                font-size: 22px;
+            }
+
+            .summary,
+            .trend-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .tab {
+                flex: 1;
+                text-align: center;
+            }
         }
     </style>
 </head>
 
 <body>
-
-<div class="top-bar">
-    <h1>{{symbol}} AI Trading Dashboard</h1>
-
-    <form method="get">
-        <select name="symbol" onchange="this.form.submit()">
-            <option value="NIFTY" {% if symbol=="NIFTY" %}selected{% endif %}>NIFTY</option>
-            <option value="BANKNIFTY" {% if symbol=="BANKNIFTY" %}selected{% endif %}>BANKNIFTY</option>
-        </select>
-    </form>
-</div>
-
-<div class="container">
-
-    <!-- ========================= -->
-    <!-- TREND -->
-    <!-- ========================= -->
-    <div class="card">
-        <div class="title">📈 Multi-Timeframe Trend</div>
-
-        <div class="row">
-            <span class="label">Price</span>
-            <span class="value">{{price}}</span>
+<main class="shell">
+    <div class="top-bar">
+        <div>
+            <h1>{{symbol}} Trading Dashboard</h1>
+            <div class="subtitle">Last updated: {{updated_at}}</div>
         </div>
 
-        <hr>
-
-        <div class="row">
-            <span class="label">Daily Trend</span>
-            <span class="value {% if daily_trend=='BULLISH' %}green{% else %}red{% endif %}">
-                {{daily_trend}}
-            </span>
-        </div>
-
-        <div class="row">
-            <span class="label">Hourly Trend</span>
-            <span class="value {% if hourly_trend=='BULLISH' %}green{% else %}red{% endif %}">
-                {{hourly_trend}}
-            </span>
-        </div>
-
-        <div class="row">
-            <span class="label">Alignment</span>
-            <span class="value {% if alignment=='ALIGNED' %}green{% else %}orange{% endif %}">
-                {{alignment}}
-            </span>
-        </div>
-
-        <hr>
-
-        <div class="row">
-            <span class="label">EMA 9</span>
-            <span class="value">{{ema9}}</span>
-        </div>
-
-        <div class="row">
-            <span class="label">EMA 21</span>
-            <span class="value">{{ema21}}</span>
-        </div>
-
-        <div class="row">
-            <span class="label">RSI</span>
-            <span class="value">{{rsi}}</span>
-        </div>
-
-        <div class="row">
-            <span class="label">DX</span>
-            <span class="value">{{dx}}</span>
-        </div>
-
-        <div class="big">
-            Final Trend:
-            <span class="{{color}}">{{trend}}</span>
-        </div>
+        <nav class="tabs" aria-label="Symbol selector">
+            {% for item in symbols %}
+            <a class="tab {% if symbol==item %}active{% endif %}" href="/?symbol={{item}}">{{item}}</a>
+            {% endfor %}
+        </nav>
     </div>
 
-    <!-- ========================= -->
-    <!-- DECISION -->
-    <!-- ========================= -->
-    <div class="card">
-        <div class="title">🧠 Decision Engine</div>
-
-        <div class="row">
-            <span class="label">Market Type</span>
-            <span class="{{color}}">{{trend}}</span>
+    <section class="summary" aria-label="Market summary">
+        <div class="metric">
+            <span class="metric-label">Price</span>
+            <span class="metric-value">{{price}}</span>
         </div>
 
-        <div class="row">
-            <span class="label">Strength</span>
-            <span>
-                {% if dx > 30 %}
-                <span class="green">STRONG</span>
-                {% elif dx > 20 %}
-                <span class="orange">MODERATE</span>
-                {% else %}
-                <span class="red">WEAK</span>
-                {% endif %}
-            </span>
+        <div class="metric">
+            <span class="metric-label">Final Trend</span>
+            <span class="metric-value {{color}}">{{trend}}</span>
         </div>
 
-        <div class="row">
-            <span class="label">Momentum</span>
-            <span>
-                {% if rsi > 60 %}
-                <span class="green">BULLISH</span>
-                {% elif rsi < 40 %}
-                <span class="red">BEARISH</span>
-                {% else %}
-                <span class="orange">SIDEWAYS</span>
-                {% endif %}
-            </span>
+        <div class="metric">
+            <span class="metric-label">Strength</span>
+            <span class="metric-value {{strength_color}}">{{strength}}</span>
         </div>
 
-        <hr>
-
-        <div class="big">Strategy</div>
-        <div class="big {{color}}">
-            {{suggested_strategy}}
+        <div class="metric">
+            <span class="metric-label">Strategy</span>
+            <span class="metric-value {{color}}">{{suggested_strategy}}</span>
         </div>
-    </div>
-</div>
+    </section>
 
+    <section class="grid">
+        <div class="card">
+            <div class="card-title">
+                <span>Multi-Timeframe Trend</span>
+                <span class="badge {% if alignment=='ALIGNED' %}green{% else %}orange{% endif %}">{{alignment}}</span>
+            </div>
+
+            <div class="trend-grid">
+                <div class="tile">
+                    <span class="label">Daily Trend</span>
+                    <span class="tile-value {% if daily_trend=='BULLISH' %}green{% else %}red{% endif %}">{{daily_trend}}</span>
+                </div>
+
+                <div class="tile">
+                    <span class="label">Hourly Trend</span>
+                    <span class="tile-value {% if hourly_trend=='BULLISH' %}green{% else %}red{% endif %}">{{hourly_trend}}</span>
+                </div>
+
+                <div class="tile">
+                    <span class="label">Momentum</span>
+                    <span class="tile-value {{momentum_color}}">{{momentum}}</span>
+                </div>
+            </div>
+
+        </div>
+
+        <aside class="card">
+            <div class="card-title">
+                <span>Decision Engine</span>
+                <span class="badge {{trade_color}}">{{trade_status}}</span>
+            </div>
+
+            <div class="rows">
+                <div class="row">
+                    <span class="label">Market Type</span>
+                    <span class="value {{color}}">{{trend}}</span>
+                </div>
+
+                <div class="row">
+                    <span class="label">Strength</span>
+                    <span class="value {{strength_color}}">{{strength}}</span>
+                </div>
+
+                <div class="row">
+                    <span class="label">Momentum</span>
+                    <span class="value {{momentum_color}}">{{momentum}}</span>
+                </div>
+
+                <div class="row">
+                    <span class="label">Suggested Strategy</span>
+                    <span class="value {{color}}">{{suggested_strategy}}</span>
+                </div>
+            </div>
+
+            <div class="decision">
+                <span class="label">Reason</span>
+                <p class="decision-text">{{decision_reason}}</p>
+            </div>
+        </aside>
+    </section>
+</main>
 </body>
 </html>

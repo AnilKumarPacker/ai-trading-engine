@@ -20,11 +20,66 @@ tv = TvDatafeed(
 last_cache = {}
 last_updated = {}
 
+SYMBOL_CONFIG = {
+    "NIFTY": {"exchange": "NSE"},
+    "BANKNIFTY": {"exchange": "NSE"},
+    "SENSEX": {"exchange": "BSE"},
+}
+
 # -------------------------
 # UTILS
 # -------------------------
 def get_ist_now():
     return datetime.datetime.utcnow() + datetime.timedelta(hours=5, minutes=30)
+
+
+def build_dashboard_signals(trend, alignment, dx, rsi):
+    if dx > 30:
+        strength = "STRONG"
+        strength_color = "green"
+    elif dx > 20:
+        strength = "MODERATE"
+        strength_color = "orange"
+    else:
+        strength = "WEAK"
+        strength_color = "red"
+
+    if rsi > 60:
+        momentum = "BULLISH"
+        momentum_color = "green"
+    elif rsi < 40:
+        momentum = "BEARISH"
+        momentum_color = "red"
+    else:
+        momentum = "SIDEWAYS"
+        momentum_color = "orange"
+
+    if trend in ("BULLISH", "BEARISH") and alignment == "ALIGNED" and dx > 20:
+        trade_status = "TRADE ALLOWED"
+        trade_color = "green"
+        decision_reason = "Daily and hourly trend are aligned, with enough directional strength."
+    elif alignment == "CONFLICT":
+        trade_status = "WAIT"
+        trade_color = "orange"
+        decision_reason = "Daily and hourly trend are not aligned. Avoid directional spreads."
+    elif dx <= 20:
+        trade_status = "LOW CONVICTION"
+        trade_color = "orange"
+        decision_reason = "Directional strength is weak. Prefer defined-risk range setups or wait."
+    else:
+        trade_status = "RANGE SETUP"
+        trade_color = "orange"
+        decision_reason = "Trend filter is neutral. Use range strategy only with clear risk limits."
+
+    return {
+        "strength": strength,
+        "strength_color": strength_color,
+        "momentum": momentum,
+        "momentum_color": momentum_color,
+        "trade_status": trade_status,
+        "trade_color": trade_color,
+        "decision_reason": decision_reason,
+    }
 
 # -------------------------
 # SUPER TREND
@@ -82,6 +137,8 @@ def add_supertrend(df, period=10, multiplier=3):
 # CORE ENGINE
 # -------------------------
 def get_market_direction(symbol="NIFTY", exchange="NSE"):
+    symbol = symbol.upper()
+    exchange = SYMBOL_CONFIG.get(symbol, {}).get("exchange", exchange)
 
     now = get_ist_now()
 
@@ -209,7 +266,9 @@ def get_market_direction(symbol="NIFTY", exchange="NSE"):
 @app.route("/")
 def dashboard():
 
-    symbol = request.args.get("symbol", "NIFTY")
+    symbol = request.args.get("symbol", "NIFTY").upper()
+    if symbol not in SYMBOL_CONFIG:
+        symbol = "NIFTY"
 
     (
         price, ema9, ema21, rsi,
@@ -219,9 +278,13 @@ def dashboard():
         daily_trend, hourly_trend, alignment
     ) = get_market_direction(symbol)
 
+    signals = build_dashboard_signals(trend, alignment, dx, rsi)
+    updated_at = last_updated.get(symbol, get_ist_now()).strftime("%d %b %Y, %I:%M %p IST")
+
     return render_template(
         "dashboard.html",
         symbol=symbol,
+        symbols=SYMBOL_CONFIG.keys(),
         price=price,
         ema9=ema9,
         ema21=ema21,
@@ -234,7 +297,9 @@ def dashboard():
         suggested_strategy=strategy,
         daily_trend=daily_trend,
         hourly_trend=hourly_trend,
-        alignment=alignment
+        alignment=alignment,
+        updated_at=updated_at,
+        **signals
     )
 
 # -------------------------
@@ -246,7 +311,7 @@ def hourly_updater():
             now = get_ist_now()
 
             if now.minute == 2:
-                for sym in ["NIFTY", "BANKNIFTY"]:
+                for sym in SYMBOL_CONFIG:
                     get_market_direction(sym)
                 time.sleep(70)
 
