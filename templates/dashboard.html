@@ -217,6 +217,99 @@
             font-size: 14px;
         }
 
+        .option-section {
+            margin-top: 16px;
+        }
+
+        .option-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 14px;
+        }
+
+        .option-meta .badge {
+            color: var(--muted);
+        }
+
+        .strategy-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 10px;
+            margin-bottom: 14px;
+        }
+
+        .strategy-leg {
+            background: var(--panel-soft);
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            padding: 12px;
+            min-height: 74px;
+        }
+
+        .strategy-leg strong {
+            display: block;
+            margin-top: 8px;
+            font-size: 14px;
+            overflow-wrap: anywhere;
+        }
+
+        .table-wrap {
+            overflow-x: auto;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+        }
+
+        .option-table {
+            width: 100%;
+            min-width: 860px;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        .option-table th,
+        .option-table td {
+            padding: 10px 12px;
+            border-bottom: 1px solid var(--line);
+            text-align: right;
+            white-space: nowrap;
+        }
+
+        .option-table th {
+            color: var(--muted);
+            background: var(--panel-soft);
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0;
+        }
+
+        .option-table td:first-child,
+        .option-table th:first-child,
+        .option-table td:last-child,
+        .option-table th:last-child {
+            text-align: left;
+        }
+
+        .option-table tr:last-child td {
+            border-bottom: 0;
+        }
+
+        .option-table .strike {
+            color: var(--blue);
+            font-weight: 800;
+            text-align: center;
+        }
+
+        .option-table .atm-row {
+            background: #152536;
+        }
+
+        .empty-state {
+            color: var(--muted);
+            margin: 0;
+            line-height: 1.45;
+        }
+
         @media (max-width: 840px) {
             body {
                 padding: 14px;
@@ -233,7 +326,8 @@
             }
 
             .summary,
-            .trend-grid {
+            .trend-grid,
+            .strategy-grid {
                 grid-template-columns: 1fr 1fr;
             }
         }
@@ -244,7 +338,8 @@
             }
 
             .summary,
-            .trend-grid {
+            .trend-grid,
+            .strategy-grid {
                 grid-template-columns: 1fr;
             }
 
@@ -268,6 +363,7 @@
             {% for item in symbols %}
             <a class="tab {% if symbol==item %}active{% endif %}" href="/?symbol={{item}}">{{item}}</a>
             {% endfor %}
+            <a class="tab" href="/backtest?symbol={{symbol}}&run=0">Backtest</a>
         </nav>
     </div>
 
@@ -352,6 +448,104 @@
                 <p class="decision-text">{{decision_reason}}</p>
             </div>
         </aside>
+    </section>
+
+    <section class="card option-section">
+        <div class="card-title">
+            <span>Option Chain</span>
+            <span class="badge blue">{{option_strategy.strategy}}</span>
+        </div>
+
+        {% if option_chain and option_chain.chain %}
+        <div class="option-meta">
+            <span class="badge">Expiry {{option_chain.expiry}}</span>
+            <span class="badge">Spot {{option_chain.spot_price}}</span>
+            <span class="badge">ATM {{option_chain.atm_strike}}</span>
+        </div>
+
+        <div class="strategy-grid">
+            {% if option_strategy.sell %}
+            <div class="strategy-leg">
+                <span class="label">Sell</span>
+                <strong class="{% if option_strategy.sell.type == 'CE' %}red{% else %}green{% endif %}">
+                    {{option_strategy.sell.symbol or option_strategy.sell.type}}
+                </strong>
+            </div>
+            {% endif %}
+
+            {% if option_strategy.buy %}
+            <div class="strategy-leg">
+                <span class="label">Buy</span>
+                <strong class="{% if option_strategy.buy.type == 'CE' %}red{% else %}green{% endif %}">
+                    {{option_strategy.buy.symbol or option_strategy.buy.type}}
+                </strong>
+            </div>
+            {% endif %}
+
+            {% if option_strategy.sell_ce %}
+            <div class="strategy-leg">
+                <span class="label">Sell CE</span>
+                <strong class="red">{{option_strategy.sell_ce.symbol or option_strategy.sell_ce.type}}</strong>
+            </div>
+            {% endif %}
+
+            {% if option_strategy.buy_ce %}
+            <div class="strategy-leg">
+                <span class="label">Buy CE</span>
+                <strong class="red">{{option_strategy.buy_ce.symbol or option_strategy.buy_ce.type}}</strong>
+            </div>
+            {% endif %}
+
+            {% if option_strategy.sell_pe %}
+            <div class="strategy-leg">
+                <span class="label">Sell PE</span>
+                <strong class="green">{{option_strategy.sell_pe.symbol or option_strategy.sell_pe.type}}</strong>
+            </div>
+            {% endif %}
+
+            {% if option_strategy.buy_pe %}
+            <div class="strategy-leg">
+                <span class="label">Buy PE</span>
+                <strong class="green">{{option_strategy.buy_pe.symbol or option_strategy.buy_pe.type}}</strong>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="table-wrap">
+            <table class="option-table">
+                <thead>
+                    <tr>
+                        <th>Call Symbol</th>
+                        <th>Call LTP</th>
+                        <th>Call Vol</th>
+                        <th>Call Delta</th>
+                        <th>Strike</th>
+                        <th>Put Delta</th>
+                        <th>Put Vol</th>
+                        <th>Put LTP</th>
+                        <th>Put Symbol</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in option_chain.chain %}
+                    <tr class="{% if row.strike == option_chain.atm_strike %}atm-row{% endif %}">
+                        <td>{{row.ce.symbol or '-'}}</td>
+                        <td>{{row.ce.ltp or '-'}}</td>
+                        <td>{{row.ce.volume or '-'}}</td>
+                        <td>{{row.ce.delta if row.ce.delta is not none else '-'}}</td>
+                        <td class="strike">{{row.strike}}</td>
+                        <td>{{row.pe.delta if row.pe.delta is not none else '-'}}</td>
+                        <td>{{row.pe.volume or '-'}}</td>
+                        <td>{{row.pe.ltp or '-'}}</td>
+                        <td>{{row.pe.symbol or '-'}}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="empty-state">Option chain is not available.</p>
+        {% endif %}
     </section>
 </main>
 </body>
